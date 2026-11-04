@@ -1,0 +1,21 @@
+{
+  "name": "falling-pickaxe-game",
+  "version": "1.0.0",
+  "description": "Mobile-first pixel art falling pickaxe arcade game designed for short-form video engagement.",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve .",
+    "dev": "serve ."
+  },
+  "keywords": [
+    "html5-game",
+    "arcade",
+    "physics",
+    "pixel-art",
+    "mobile-game",
+    "vercel"
+  ],
+  "author": "Antigravity",
+  "license": "MIT"
+}
+
