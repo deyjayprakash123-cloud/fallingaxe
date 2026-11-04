@@ -31,6 +31,7 @@ export class Game {
     this.cameraY = 0;
     this.targetCameraY = 0;
     this.depth = 0;
+    this.maxDepthReached = 0;
     this.lastTime = 0;
     this.autoTimer = 0;
     this.totalRunWin = 0;
@@ -79,6 +80,7 @@ export class Game {
   resetRun() {
     this.state = 'IDLE';
     this.depth = 0;
+    this.maxDepthReached = 0;
     this.cameraY = 0;
     this.targetCameraY = 0;
     this.totalRunWin = 0;
@@ -147,6 +149,8 @@ export class Game {
 
   launchPickaxe() {
     this.state = 'FALLING';
+    this.depth = 0;
+    this.maxDepthReached = 0;
     this.physics.active = true;
     this.physics.x = CONFIG.CANVAS_WIDTH / 2;
     this.physics.y = CONFIG.WHEEL.Y + 35;
@@ -346,8 +350,35 @@ export class Game {
         this.onCollision(probe, block, col, row, speed);
       });
 
+      // Record pickaxe motion ghost trail for enhanced arcade graphics
+      const speed = Math.hypot(this.physics.vx, this.physics.vy);
+      this.particles.recordTrail(this.physics.x, this.physics.y, this.physics.angle, this.physics.tier.accentColor, speed);
+
+      // Height / Depth Descent Scoring:
+      // Score ONLY increments as the pickaxe descends into NEW deeper territory (falling downward).
+      // If the pickaxe bounces up or stays at the same vertical height, NO score is added!
       const currentDepth = Math.max(0, (this.physics.y - CONFIG.SHAFT.START_ROW_Y) / 10);
-      this.depth = Math.max(this.depth, currentDepth);
+      if (currentDepth > this.maxDepthReached) {
+        const delta = currentDepth - this.maxDepthReached;
+
+        // Celebratory depth milestone popups every 50m
+        const prevMilestone = Math.floor(this.maxDepthReached / 50);
+        const newMilestone = Math.floor(currentDepth / 50);
+        if (newMilestone > prevMilestone && newMilestone > 0) {
+          const depthM = newMilestone * 50;
+          const mult = (1.0 + depthM / 40.0).toFixed(1);
+          this.particles.spawnPopup(`⚡ ${depthM}m DEPTH! (${mult}X)`, this.physics.x, this.physics.y - 35, '#00e5ff', 22);
+          this.audio.play('hit_ore', 1.3);
+        }
+
+        this.maxDepthReached = currentDepth;
+        this.depth = currentDepth;
+
+        // Downward descent score: scales with bet and depth multiplier
+        const descentPoints = delta * (this.hud.bet * 0.035) * (1.0 + currentDepth / 60.0);
+        this.totalRunWin += descentPoints;
+        this.hud.targetWin = Math.round(this.totalRunWin * 100) / 100;
+      }
 
       const currentRow = Math.floor((this.physics.y - CONFIG.SHAFT.START_ROW_Y) / CONFIG.SHAFT.BLOCK_SIZE);
       this.level.generateUpToRow(currentRow + CONFIG.SHAFT.BUFFER_ROWS_BELOW);
@@ -415,10 +446,13 @@ export class Game {
   }
 
   renderWorld(ctx) {
-    // A. 4-Chance Selector Wheel at Top
+    // 1. Ambient Volcanic Floating Embers (Background atmosphere layer)
+    this.particles.renderEmbers(ctx, this.cameraY);
+
+    // 2. 4-Chance Selector Wheel at Top
     this.wheel.render(ctx, this.assets, this.cameraY);
 
-    // B. Glowing Lava Rim Entrance across top of mine shaft
+    // 3. Glowing Lava Rim Entrance across top of mine shaft
     const lavaImg = this.assets.get('lava_rim');
     const lavaY = CONFIG.SHAFT.START_ROW_Y - this.cameraY - 14;
     if (lavaImg) {
@@ -427,7 +461,7 @@ export class Game {
       }
     }
 
-    // C. Blocks in View
+    // 4. Blocks in View
     const startRow = Math.max(0, Math.floor((this.cameraY - 60) / CONFIG.SHAFT.BLOCK_SIZE));
     const endRow = Math.ceil((this.cameraY + CONFIG.CANVAS_HEIGHT + 60) / CONFIG.SHAFT.BLOCK_SIZE);
 
@@ -446,20 +480,67 @@ export class Game {
             ctx.fillRect(bx, by, CONFIG.SHAFT.BLOCK_SIZE, CONFIG.SHAFT.BLOCK_SIZE);
           }
 
+          // Damage overlay indicator if block has taken hits
           if (block.hp < block.maxHp && block.maxHp > 1) {
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+            const crackRatio = 1 - (block.hp / block.maxHp);
+            ctx.fillStyle = `rgba(0, 0, 0, ${0.25 + crackRatio * 0.35})`;
             ctx.fillRect(bx + 4, by + 4, CONFIG.SHAFT.BLOCK_SIZE - 8, 4);
           }
         }
       }
     }
 
-    // D. Falling Pickaxe
+    // 5. Mine Shaft Side Depth Vignette (Shades outer wall columns to focus on the center action)
+    const shaftTopY = Math.max(0, CONFIG.SHAFT.START_ROW_Y - this.cameraY);
+    if (shaftTopY < CONFIG.CANVAS_HEIGHT) {
+      const leftGrad = ctx.createLinearGradient(0, 0, 52, 0);
+      leftGrad.addColorStop(0, 'rgba(8, 6, 14, 0.7)');
+      leftGrad.addColorStop(1, 'rgba(8, 6, 14, 0)');
+      ctx.fillStyle = leftGrad;
+      ctx.fillRect(0, shaftTopY, 52, CONFIG.CANVAS_HEIGHT - shaftTopY);
+
+      const rightGrad = ctx.createLinearGradient(CONFIG.CANVAS_WIDTH, 0, CONFIG.CANVAS_WIDTH - 52, 0);
+      rightGrad.addColorStop(0, 'rgba(8, 6, 14, 0.7)');
+      rightGrad.addColorStop(1, 'rgba(8, 6, 14, 0)');
+      ctx.fillStyle = rightGrad;
+      ctx.fillRect(CONFIG.CANVAS_WIDTH - 52, shaftTopY, 52, CONFIG.CANVAS_HEIGHT - shaftTopY);
+    }
+
+    // 6. Falling Pickaxe Visuals (Ghost Trail + Dynamic Radial Light Halo + Sprite)
     if (this.physics.active) {
       const px = this.physics.x;
       const py = this.physics.y - this.cameraY;
       const pSize = this.physics.tier.size;
 
+      // A. Pickaxe Ghost Motion Trail
+      this.particles.renderTrail(ctx, this.assets, this.physics.tier.spriteKey, pSize, this.cameraY);
+
+      // B. Dynamic Radial Lighting Halo (Custom tinted per tier)
+      const lightGrad = ctx.createRadialGradient(px, py, 6, px, py, 115);
+      if (this.physics.tier.id === 'diamond') {
+        lightGrad.addColorStop(0, 'rgba(0, 229, 255, 0.35)');
+        lightGrad.addColorStop(0.4, 'rgba(0, 150, 255, 0.14)');
+        lightGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      } else if (this.physics.tier.id === 'iron') {
+        lightGrad.addColorStop(0, 'rgba(230, 240, 255, 0.32)');
+        lightGrad.addColorStop(0.4, 'rgba(120, 140, 190, 0.12)');
+        lightGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      } else if (this.physics.tier.id === 'stone') {
+        lightGrad.addColorStop(0, 'rgba(200, 210, 225, 0.28)');
+        lightGrad.addColorStop(0.4, 'rgba(140, 150, 165, 0.10)');
+        lightGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      } else {
+        // Wooden
+        lightGrad.addColorStop(0, 'rgba(255, 210, 110, 0.32)');
+        lightGrad.addColorStop(0.4, 'rgba(255, 110, 25, 0.12)');
+        lightGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      }
+      ctx.fillStyle = lightGrad;
+      ctx.beginPath();
+      ctx.arc(px, py, 115, 0, Math.PI * 2);
+      ctx.fill();
+
+      // C. Rotating Pickaxe Sprite
       ctx.save();
       ctx.translate(px, py);
       ctx.rotate(this.physics.angle);
@@ -474,7 +555,7 @@ export class Game {
       ctx.restore();
     }
 
-    // E. Particles and Floating Popups
+    // 7. Particles and Floating Popups
     this.particles.render(ctx, this.cameraY);
   }
 }

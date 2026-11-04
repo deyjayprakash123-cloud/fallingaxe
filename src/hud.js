@@ -539,15 +539,17 @@ export class HUD {
     // --- Section 4: Depth Multiplier ---
     ctx.font = 'bold 14px "Courier New", monospace';
     ctx.fillStyle = '#00e5ff';
-    ctx.fillText('4. DEPTH MULTIPLIER (BIG WIN POTENTIAL)', mx + 16, curY);
+    ctx.fillText('4. DEPTH & DESCENT SCORE (BIG WIN POTENTIAL)', mx + 16, curY);
     curY += 18;
     ctx.font = '11.5px "Courier New", monospace';
     ctx.fillStyle = '#d0d4e0';
-    ctx.fillText('• Points scale up every 40 meters (+1.0x per 40m)!', mx + 16, curY);
+    ctx.fillText('• Score increases continuously as you descend deeper!', mx + 16, curY);
     curY += 16;
-    ctx.fillText('• At 100m = 3.5x payout! At 200m = 6.0x! At 500m = 13.5x!', mx + 16, curY);
+    ctx.fillText('• Bouncing up or staying at same height gives NO score!', mx + 16, curY);
     curY += 16;
-    ctx.fillText('• Deeper strata contain richer Diamond & Emerald geodes!', mx + 16, curY);
+    ctx.fillText('• Points multiplier scales up every 40m (+1.0x per 40m)!', mx + 16, curY);
+    curY += 16;
+    ctx.fillText('• 100m = 3.5x payout | 200m = 6.0x | 500m = 13.5x!', mx + 16, curY);
     curY += 24;
 
     // --- Section 5: Controls ---
