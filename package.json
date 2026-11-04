@@ -2,6 +2,7 @@
   "name": "falling-pickaxe-game",
   "version": "1.0.0",
   "description": "Mobile-first pixel art falling pickaxe arcade game designed for short-form video engagement.",
+  "type": "module",
   "main": "index.html",
   "scripts": {
     "start": "serve .",

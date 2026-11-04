@@ -227,7 +227,7 @@ export const CONFIG = {
       debrisColor: '#76ff03',
       sound: 'bounce',
       isBounce: true,
-      bounceBoost: 1.70
+      bounceBoost: 1.22
     },
     unbreakable: {
       name: 'Bedrock Border',
@@ -244,10 +244,10 @@ export const CONFIG = {
   // Level Generator Probabilities
   GENERATION: {
     EMPTY_RATIO: 0.20,
-    NORMAL_RATIO: 0.45,
+    NORMAL_RATIO: 0.47,
     VALUABLE_ORE_RATIO: 0.15,
-    REINFORCED_RATIO: 0.08,
-    BOUNCE_RATIO: 0.05,
+    REINFORCED_RATIO: 0.09,
+    BOUNCE_RATIO: 0.02,     // Significantly reduced green bounce blocks (rare & tactical)
     UPGRADE_RATIO: 0.03,
     TNT_RATIO: 0.02,
     REPAIR_RATIO: 0.02

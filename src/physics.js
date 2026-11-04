@@ -241,7 +241,7 @@ export class PickaxePhysics {
       const blockDef = CONFIG.BLOCKS[block.type];
       let restitution = this.tier.bounceStrength * (blockDef.bounceBoost || 1.0);
       if (block.type === 'bounce') {
-        restitution = 1.55;
+        restitution = 1.18; // Slightly reduced jump for green bounce blocks
       }
 
       const impulse = -(1 + restitution) * vn;

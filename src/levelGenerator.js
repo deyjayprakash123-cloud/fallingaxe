@@ -110,8 +110,12 @@ export class LevelGenerator {
           const isHard = Math.random() < (0.3 + depthMeters * 0.001);
           this.setBlock(c, row, isHard ? 'hard_stone' : 'volcanic_stone');
         } else if (c === (isLeft ? endC + 1 : startC - 1)) {
-          // Bouncy corner bumper
-          this.setBlock(c, row, 'bounce');
+          // Occasional corner bumper (reduced frequency)
+          if (Math.random() < 0.35) {
+            this.setBlock(c, row, 'bounce');
+          } else {
+            this.setBlock(c, row, 'volcanic_stone');
+          }
         }
       }
     } else if (featureRoll < 0.52) {
@@ -132,14 +136,14 @@ export class LevelGenerator {
         }
       }
     } else if (featureRoll < 0.76) {
-      // 3. Narrow Speed Chute with Bounce Pads
+      // 3. Narrow Speed Chute
       const chuteCol = 3 + Math.floor(Math.random() * 4); // Chute center 3-6
       for (let c = 1; c <= 9; c++) {
         if (c === chuteCol || c === chuteCol + 1) {
           // Air gap
           continue;
         } else if (c === chuteCol - 1 || c === chuteCol + 2) {
-          this.setBlock(c, row, Math.random() < 0.5 ? 'bounce' : 'gold_ore');
+          this.setBlock(c, row, Math.random() < 0.2 ? 'bounce' : 'gold_ore');
         } else {
           this.setBlock(c, row, 'hard_stone');
         }
@@ -165,10 +169,10 @@ export class LevelGenerator {
    */
   generateStandardRow(row, depthMeters) {
     // Probability adjustments scaling with depth:
-    // - Hard stone ratio: 8% near surface -> up to 28% deep down
+    // - Hard stone ratio: 9% near surface -> up to 30% deep down (challenging!)
     // - Valuable ore ratio: 15% near surface -> up to 24% deep down
     // - High tier ores (Diamond/Emerald) appear significantly more often deep down
-    const hardStoneChance = Math.min(0.28, 0.08 + (depthMeters / 1200));
+    const hardStoneChance = Math.min(0.30, 0.09 + (depthMeters / 1100));
     const oreChance = Math.min(0.24, 0.15 + (depthMeters / 1500));
     const emptyChance = 0.20;
 
@@ -204,24 +208,24 @@ export class LevelGenerator {
           else this.setBlock(c, row, 'diamond_ore');
         }
       }
-      // 3. Reinforced Hard Stone (Difficult obstacles)
+      // 3. Reinforced Hard Stone (Difficult rock!)
       else if (blockRoll < oreChance + hardStoneChance) {
         this.setBlock(c, row, 'hard_stone');
       }
-      // 4. Bounce Pads (~5%)
-      else if (blockRoll < oreChance + hardStoneChance + 0.05) {
+      // 4. Bounce Pads (~2% - rare, tactical placement)
+      else if (blockRoll < oreChance + hardStoneChance + 0.02) {
         this.setBlock(c, row, 'bounce');
       }
       // 5. Upgrade Runes (~2.5%)
-      else if (blockRoll < oreChance + hardStoneChance + 0.075) {
+      else if (blockRoll < oreChance + hardStoneChance + 0.045) {
         this.setBlock(c, row, 'upgrade');
       }
       // 6. TNT Explosives (~2.5%)
-      else if (blockRoll < oreChance + hardStoneChance + 0.10) {
+      else if (blockRoll < oreChance + hardStoneChance + 0.07) {
         this.setBlock(c, row, 'tnt');
       }
       // 7. Repair Hearts (~2%)
-      else if (blockRoll < oreChance + hardStoneChance + 0.12) {
+      else if (blockRoll < oreChance + hardStoneChance + 0.09) {
         this.setBlock(c, row, 'repair');
       }
       // 8. Normal Stone / Volcanic / Dirt

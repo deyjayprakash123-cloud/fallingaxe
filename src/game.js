@@ -20,7 +20,7 @@ export class Game {
     // Subsystems
     this.audio = new AudioManager();
     this.assets = new AssetManager();
-    this.physics = new PickaxePhysics('stone');
+    this.physics = new PickaxePhysics('wooden');
     this.level = new LevelGenerator();
     this.particles = new ParticleSystem();
     this.wheel = new SelectorWheel(this.audio);
@@ -85,7 +85,7 @@ export class Game {
 
     this.level.reset();
     this.particles.reset();
-    this.physics = new PickaxePhysics('stone');
+    this.physics = new PickaxePhysics('wooden');
     this.physics.active = false;
     this.physics.x = CONFIG.CANVAS_WIDTH / 2;
     this.physics.y = CONFIG.WHEEL.Y;
@@ -129,9 +129,10 @@ export class Game {
           this.physics.setTier('diamond');
           this.particles.spawnPopup('DIAMOND DROP GUARANTEED!', CONFIG.CANVAS_WIDTH / 2, CONFIG.WHEEL.Y + 60, '#00e5ff', 22);
         } else {
-          // Standard starter pickaxe (stone or wooden)
-          this.physics.setTier(Math.random() < 0.35 ? 'iron' : 'stone');
-          this.particles.spawnPopup('PICKAXE UNLOCKED!', CONFIG.CANVAS_WIDTH / 2, CONFIG.WHEEL.Y + 60, '#76ff03', 22);
+          // Standard starter pickaxe begins with Wooden Pickaxe (with small 15% lucky chance for Stone!)
+          this.physics.setTier(Math.random() < 0.15 ? 'stone' : 'wooden');
+          const tierName = this.physics.tier.name.toUpperCase();
+          this.particles.spawnPopup(`${tierName} UNLOCKED!`, CONFIG.CANVAS_WIDTH / 2, CONFIG.WHEEL.Y + 60, this.physics.tier.accentColor, 22);
         }
         this.launchPickaxe();
       } else {
