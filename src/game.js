@@ -81,6 +81,7 @@ export class Game {
     this.state = 'IDLE';
     this.depth = 0;
     this.maxDepthReached = 0;
+    this.descentMeterAcc = 0;
     this.cameraY = 0;
     this.targetCameraY = 0;
     this.totalRunWin = 0;
@@ -151,6 +152,7 @@ export class Game {
     this.state = 'FALLING';
     this.depth = 0;
     this.maxDepthReached = 0;
+    this.descentMeterAcc = 0;
     this.physics.active = true;
     this.physics.x = CONFIG.CANVAS_WIDTH / 2;
     this.physics.y = CONFIG.WHEEL.Y + 35;
@@ -185,12 +187,26 @@ export class Game {
       });
 
       if (!handled && this.state === 'FALLING') {
-        if (canvasX < CONFIG.CANVAS_WIDTH / 2) {
-          this.physics.nudge(-1);
-          this.particles.spawnSparks(this.physics.x, this.physics.y, 4);
-        } else {
-          this.physics.nudge(1);
-          this.particles.spawnSparks(this.physics.x, this.physics.y, 4);
+        // Player screen tap controls jumping and steering direction!
+        const screenPickaxeX = this.physics.x;
+        const screenPickaxeY = this.physics.y - this.cameraY;
+        const dx = canvasX - screenPickaxeX;
+        const dy = canvasY - screenPickaxeY;
+
+        let dirX = 0;
+        if (dx < -15) dirX = -1; // Tap to the left: steer/jump left
+        else if (dx > 15) dirX = 1; // Tap to the right: steer/jump right
+
+        let dirY = -1; // Upward jump hop
+        if (dy > 65 && Math.abs(dx) < 65) {
+          dirY = 1; // Tap below pickaxe: downward dive smash!
+        }
+
+        const jumped = this.physics.jump(dirX, dirY);
+        if (jumped) {
+          this.audio.play('bounce', 0.55);
+          this.particles.spawnSparks(this.physics.x, this.physics.y, 6);
+          this.particles.spawnJumpPuff(this.physics.x, this.physics.y, dirX);
         }
       }
     };
@@ -202,17 +218,52 @@ export class Game {
 
     window.addEventListener('keydown', (e) => {
       if (e.code === 'Space') {
-        this.startWheelSequence(false);
-      } else if (e.code === 'ArrowLeft') {
-        if (this.state === 'FALLING') this.physics.nudge(-1);
-      } else if (e.code === 'ArrowRight') {
-        if (this.state === 'FALLING') this.physics.nudge(1);
-      } else if (e.code === 'ArrowUp') {
-        this.hud.setBetIndexDelta(1);
-        this.audio.play('spin');
-      } else if (e.code === 'ArrowDown') {
-        this.hud.setBetIndexDelta(-1);
-        this.audio.play('spin');
+        if (this.state === 'FALLING') {
+          const jumped = this.physics.jump(0, -1);
+          if (jumped) {
+            this.audio.play('bounce', 0.55);
+            this.particles.spawnJumpPuff(this.physics.x, this.physics.y, 0);
+          }
+        } else {
+          this.startWheelSequence(false);
+        }
+      } else if (e.code === 'ArrowLeft' || e.code === 'KeyA') {
+        if (this.state === 'FALLING') {
+          const jumped = this.physics.jump(-1, -1);
+          if (jumped) {
+            this.audio.play('bounce', 0.55);
+            this.particles.spawnJumpPuff(this.physics.x, this.physics.y, -1);
+          }
+        }
+      } else if (e.code === 'ArrowRight' || e.code === 'KeyD') {
+        if (this.state === 'FALLING') {
+          const jumped = this.physics.jump(1, -1);
+          if (jumped) {
+            this.audio.play('bounce', 0.55);
+            this.particles.spawnJumpPuff(this.physics.x, this.physics.y, 1);
+          }
+        }
+      } else if (e.code === 'ArrowUp' || e.code === 'KeyW') {
+        if (this.state === 'FALLING') {
+          const jumped = this.physics.jump(0, -1);
+          if (jumped) {
+            this.audio.play('bounce', 0.55);
+            this.particles.spawnJumpPuff(this.physics.x, this.physics.y, 0);
+          }
+        } else {
+          this.hud.setBetIndexDelta(1);
+          this.audio.play('spin');
+        }
+      } else if (e.code === 'ArrowDown' || e.code === 'KeyS') {
+        if (this.state === 'FALLING') {
+          const jumped = this.physics.jump(0, 1);
+          if (jumped) {
+            this.audio.play('bounce', 0.55);
+          }
+        } else {
+          this.hud.setBetIndexDelta(-1);
+          this.audio.play('spin');
+        }
       } else if (e.code === 'KeyB') {
         this.startWheelSequence(true);
       }
@@ -261,18 +312,15 @@ export class Game {
     const blockCenterX = block.col * CONFIG.SHAFT.BLOCK_SIZE + CONFIG.SHAFT.BLOCK_SIZE / 2;
     const blockCenterY = CONFIG.SHAFT.START_ROW_Y + block.row * CONFIG.SHAFT.BLOCK_SIZE + CONFIG.SHAFT.BLOCK_SIZE / 2;
 
-    // Depth multiplier: points scale up significantly as pickaxe falls deeper!
-    const depthMeters = Math.max(0, (block.row * CONFIG.SHAFT.BLOCK_SIZE) / 10);
-    const depthMultiplier = 1.0 + (depthMeters / 40.0);
-
-    // Calculate win based on user's active bet, block multiplier, and depth multiplier
-    const payout = Math.round(this.hud.bet * (blockDef.mult || 0.1) * depthMultiplier * 100) / 100;
-    this.totalRunWin += payout;
-    this.hud.targetWin = this.totalRunWin;
+    // Controlled 1-rupee unit reward calculation
+    const betFactor = Math.max(1, Math.round(this.hud.bet / 30));
+    const baseReward = blockDef.rupeeReward !== undefined ? blockDef.rupeeReward : 1.0;
+    const payout = Math.round(baseReward * betFactor);
 
     if (payout > 0) {
-      const depthTag = depthMultiplier >= 2.0 ? ` (${depthMultiplier.toFixed(1)}x)` : '';
-      this.particles.spawnPopup(`+${payout.toFixed(2)}${depthTag}`, blockCenterX, blockCenterY, blockDef.debrisColor, isExplosion ? 16 : 21);
+      this.totalRunWin += payout;
+      this.hud.targetWin = Math.floor(this.totalRunWin);
+      this.particles.spawnPopup(`+${payout} ₹`, blockCenterX, blockCenterY, blockDef.debrisColor, isExplosion ? 16 : 21);
     }
 
     this.particles.spawnBlockDebris(blockCenterX, blockCenterY, blockDef.debrisColor, isExplosion ? 6 : 10);
@@ -374,10 +422,15 @@ export class Game {
         this.maxDepthReached = currentDepth;
         this.depth = currentDepth;
 
-        // Downward descent score: scales with bet and depth multiplier
-        const descentPoints = delta * (this.hud.bet * 0.035) * (1.0 + currentDepth / 60.0);
-        this.totalRunWin += descentPoints;
-        this.hud.targetWin = Math.round(this.totalRunWin * 100) / 100;
+        // Controlled 1-rupee descent progression:
+        // Accumulate descent distance; award exactly +1.00 rupee for every 3.5m descended
+        this.descentMeterAcc = (this.descentMeterAcc || 0) + delta;
+        const METERS_PER_RUPEE = 3.5;
+        while (this.descentMeterAcc >= METERS_PER_RUPEE) {
+          this.descentMeterAcc -= METERS_PER_RUPEE;
+          this.totalRunWin += 1.0;
+          this.hud.targetWin = Math.floor(this.totalRunWin);
+        }
       }
 
       const currentRow = Math.floor((this.physics.y - CONFIG.SHAFT.START_ROW_Y) / CONFIG.SHAFT.BLOCK_SIZE);

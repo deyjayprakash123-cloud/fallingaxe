@@ -169,11 +169,11 @@ export class LevelGenerator {
    */
   generateStandardRow(row, depthMeters) {
     // Probability adjustments scaling with depth:
-    // - Hard stone ratio: 9% near surface -> up to 30% deep down (challenging!)
-    // - Valuable ore ratio: 15% near surface -> up to 24% deep down
+    // - Hard stone ratio: 16% near surface -> up to 38% deep down (high challenge!)
+    // - Valuable ore ratio: 14% near surface -> up to 24% deep down
     // - High tier ores (Diamond/Emerald) appear significantly more often deep down
-    const hardStoneChance = Math.min(0.30, 0.09 + (depthMeters / 1100));
-    const oreChance = Math.min(0.24, 0.15 + (depthMeters / 1500));
+    const hardStoneChance = Math.min(0.38, 0.16 + (depthMeters / 800));
+    const oreChance = Math.min(0.24, 0.14 + (depthMeters / 1500));
     const emptyChance = 0.20;
 
     for (let c = 1; c <= 9; c++) {

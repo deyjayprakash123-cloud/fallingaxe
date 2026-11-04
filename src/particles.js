@@ -88,6 +88,24 @@ export class ParticleSystem {
     }
   }
 
+  spawnJumpPuff(x, y, dirX = 0) {
+    for (let i = 0; i < 7; i++) {
+      const spreadAngle = (Math.PI / 2) + (Math.random() - 0.5) * 0.8;
+      const speed = 60 + Math.random() * 120;
+      this.particles.push({
+        x: x + (Math.random() - 0.5) * 14,
+        y: y + 12,
+        vx: Math.cos(spreadAngle) * speed - dirX * 60,
+        vy: Math.sin(spreadAngle) * speed,
+        size: 3 + Math.random() * 3,
+        color: Math.random() > 0.4 ? '#ffffff' : '#ffd700',
+        life: 0.22 + Math.random() * 0.15,
+        maxLife: 0.37,
+        type: 'spark'
+      });
+    }
+  }
+
   spawnExplosion(x, y) {
     this.addShake(15);
 

@@ -30,6 +30,7 @@ export class PickaxePhysics {
     this.isStuck = false;
     this.active = false;
     this.hitBlockCooldowns = new Map();
+    this.jumpCooldown = 0;
   }
 
   setTier(tierKey) {
@@ -53,6 +54,34 @@ export class PickaxePhysics {
     this.vx += direction * CONFIG.PHYSICS.NUDGE_IMPULSE_X;
     this.vy = Math.min(this.vy, this.vy + CONFIG.PHYSICS.NUDGE_IMPULSE_Y);
     this.angularVelocity += direction * 6.0;
+  }
+
+  jump(dirX = 0, dirY = -1) {
+    if (this.jumpCooldown > 0) {
+      // Light air-steering if jump is on cooldown
+      this.vx += dirX * (CONFIG.PHYSICS.JUMP_IMPULSE_X * 0.4);
+      return false;
+    }
+
+    this.jumpCooldown = CONFIG.PHYSICS.JUMP_COOLDOWN;
+
+    if (dirY < 0) {
+      // Upward Jump Hop: lifts pickaxe upward and steers sideways
+      this.vy = CONFIG.PHYSICS.JUMP_IMPULSE_Y;
+      this.vx = dirX * CONFIG.PHYSICS.JUMP_IMPULSE_X;
+      this.angularVelocity = (dirX !== 0 ? dirX : (Math.random() > 0.5 ? 1 : -1)) * 9.5;
+    } else if (dirY > 0) {
+      // Downward Slam Dive: accelerates directly downward to smash blocks
+      this.vy = Math.max(this.vy + 260, 520);
+      this.vx = dirX * 140;
+      this.angularVelocity = (Math.random() > 0.5 ? 1 : -1) * 12.0;
+    } else {
+      // Pure Horizontal Steer Hop
+      this.vx = dirX * CONFIG.PHYSICS.JUMP_IMPULSE_X;
+      this.vy = Math.min(this.vy, -180);
+      this.angularVelocity = dirX * 8.0;
+    }
+    return true;
   }
 
   getProbes() {
@@ -87,6 +116,11 @@ export class PickaxePhysics {
 
     for (let s = 0; s < steps; s++) {
       this.subUpdate(subDt, level, onCollision);
+    }
+
+    // Jump cooldown decay
+    if (this.jumpCooldown > 0) {
+      this.jumpCooldown = Math.max(0, this.jumpCooldown - dt);
     }
 
     // Cooldown cleanup

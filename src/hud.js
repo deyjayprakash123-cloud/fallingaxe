@@ -161,8 +161,13 @@ export class HUD {
 
   update(dt) {
     if (this.win < this.targetWin) {
-      const step = Math.max(0.5, (this.targetWin - this.win) * dt * 8);
-      this.win = Math.min(this.targetWin, this.win + step);
+      this.winTickTimer = (this.winTickTimer || 0) + dt;
+      // Controlled 1-rupee increment every tick so the player sees the score increase cleanly by 1 rupee
+      const interval = (this.targetWin - this.win > 25) ? 0.04 : 0.08;
+      if (this.winTickTimer >= interval) {
+        this.winTickTimer = 0;
+        this.win = Math.min(this.targetWin, Math.floor(this.win + 1.00));
+      }
     }
   }
 
@@ -497,69 +502,75 @@ export class HUD {
     curY += 18;
     ctx.font = '11.5px "Courier New", monospace';
     ctx.fillStyle = '#d29655';
-    ctx.fillText('• WOOD:    60 HP | 1.0 Dmg | 1.5x Wear (Fragile starter)', mx + 16, curY);
+    ctx.fillText('• WOOD:    45 HP | 1.0 Dmg | 1.8x Wear (Fragile starter)', mx + 16, curY);
     curY += 16;
     ctx.fillStyle = '#b0b5be';
-    ctx.fillText('• STONE:  110 HP | 1.6 Dmg | 1.0x Wear (Solid balanced)', mx + 16, curY);
+    ctx.fillText('• STONE:   85 HP | 1.6 Dmg | 1.2x Wear (Solid balanced)', mx + 16, curY);
     curY += 16;
     ctx.fillStyle = '#e0e6ed';
-    ctx.fillText('• IRON:   200 HP | 2.6 Dmg | 0.7x Wear (Heavy duty steel)', mx + 16, curY);
+    ctx.fillText('• IRON:   160 HP | 2.6 Dmg | 0.8x Wear (Heavy duty steel)', mx + 16, curY);
     curY += 16;
     ctx.fillStyle = '#00e5ff';
-    ctx.fillText('• DIAMOND:350 HP | 4.2 Dmg | 0.4x Wear (Slices rock!)', mx + 16, curY);
-    curY += 16;
-    ctx.fillStyle = '#d0d4e0';
-    ctx.fillText('• Durability degrades physically based on rock hardness!', mx + 16, curY);
-    curY += 24;
-
-    // --- Section 3: Blocks & Multipliers ---
-    ctx.font = 'bold 14px "Courier New", monospace';
-    ctx.fillStyle = '#00e5ff';
-    ctx.fillText('3. BLOCKS & PAYOUT MULTIPLIERS', mx + 16, curY);
-    curY += 18;
-    ctx.font = '11.5px "Courier New", monospace';
-    ctx.fillStyle = '#d0d4e0';
-    ctx.fillText('• Dirt (1 HP): 0.08x Bet | Low wear', mx + 16, curY);
-    curY += 16;
-    ctx.fillText('• Stone / Volcanic (2 HP): 0.15x - 0.25x Bet', mx + 16, curY);
+    ctx.fillText('• DIAMOND:260 HP | 4.2 Dmg | 0.5x Wear (Slices rock!)', mx + 16, curY);
     curY += 16;
     ctx.fillStyle = '#ff8a80';
-    ctx.fillText('• Hard Stone (3 HP): 0.60x Bet | Heavy Wear (-2.2 HP!)', mx + 16, curY);
-    curY += 16;
-    ctx.fillStyle = '#ffd700';
-    ctx.fillText('• Copper: 1.2x | Gold: 3.5x | Diamond: 10x | Emerald: 25x!', mx + 16, curY);
-    curY += 16;
-    ctx.fillStyle = '#ff5252';
-    ctx.fillText('• TNT: 3x3 blast clears cavity & pays for all blocks!', mx + 16, curY);
-    curY += 16;
-    ctx.fillStyle = '#76ff03';
-    ctx.fillText('• Upgrade: Tier Up! | Repair: +50 HP | Bounce: 0 wear pad', mx + 16, curY);
+    ctx.fillText('• Warning: Crashing into Hard Stone deals -3 HP wear!', mx + 16, curY);
     curY += 24;
 
-    // --- Section 4: Depth Multiplier ---
+    // --- Section 3: Blocks & Rupee Rewards ---
     ctx.font = 'bold 14px "Courier New", monospace';
     ctx.fillStyle = '#00e5ff';
-    ctx.fillText('4. DEPTH & DESCENT SCORE (BIG WIN POTENTIAL)', mx + 16, curY);
+    ctx.fillText('3. BLOCKS & RUPEE REWARDS', mx + 16, curY);
     curY += 18;
     ctx.font = '11.5px "Courier New", monospace';
     ctx.fillStyle = '#d0d4e0';
-    ctx.fillText('• Score increases continuously as you descend deeper!', mx + 16, curY);
+    ctx.fillText('• Dirt / Stone / Volcanic: +1 ₹ payout', mx + 16, curY);
+    curY += 16;
+    ctx.fillStyle = '#ff8a80';
+    ctx.fillText('• Hard Stone: +2 ₹ | High wear (-3 HP!)', mx + 16, curY);
+    curY += 16;
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText('• Copper: +3 ₹ | Gold: +5 ₹ | Diamond: +8 ₹ | Emerald: +12 ₹', mx + 16, curY);
+    curY += 16;
+    ctx.fillStyle = '#ff5252';
+    ctx.fillText('• TNT: +3 ₹ | 3x3 blast clears path and awards blocks!', mx + 16, curY);
+    curY += 16;
+    ctx.fillStyle = '#76ff03';
+    ctx.fillText('• Upgrade: Tier Up! | Repair: +35 HP | Bounce: 0 wear pad', mx + 16, curY);
+    curY += 24;
+
+    // --- Section 4: Depth & Descent Score ---
+    ctx.font = 'bold 14px "Courier New", monospace';
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillText('4. STEADY 1-RUPEE DESCENT SCORING', mx + 16, curY);
+    curY += 18;
+    ctx.font = '11.5px "Courier New", monospace';
+    ctx.fillStyle = '#d0d4e0';
+    ctx.fillText('• Score increases steadily by 1 ₹ every 3.5m descended!', mx + 16, curY);
     curY += 16;
     ctx.fillText('• Bouncing up or staying at same height gives NO score!', mx + 16, curY);
     curY += 16;
-    ctx.fillText('• Points multiplier scales up every 40m (+1.0x per 40m)!', mx + 16, curY);
+    ctx.fillText('• You must push down into new depths to earn rupees!', mx + 16, curY);
     curY += 16;
-    ctx.fillText('• 100m = 3.5x payout | 200m = 6.0x | 500m = 13.5x!', mx + 16, curY);
+    ctx.fillText('• Depth milestones at 50m, 100m, 150m celebrate records!', mx + 16, curY);
     curY += 24;
 
-    // --- Section 5: Controls ---
+    // --- Section 5: Screen Tap Controls ---
     ctx.font = 'bold 14px "Courier New", monospace';
     ctx.fillStyle = '#00e5ff';
-    ctx.fillText('5. CONTROLS & SHORTCUTS', mx + 16, curY);
+    ctx.fillText('5. ACTIVE JUMP & DIRECTION CONTROLS', mx + 16, curY);
     curY += 18;
     ctx.font = '11.5px "Courier New", monospace';
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText('• Click Left / Right: Jump & Steer axe sideways!', mx + 16, curY);
+    curY += 16;
+    ctx.fillText('• Click Above Axe: High vertical jump hop!', mx + 16, curY);
+    curY += 16;
+    ctx.fillText('• Click Below Axe: Downward dive smash!', mx + 16, curY);
+    curY += 16;
     ctx.fillStyle = '#d0d4e0';
-    ctx.fillText('• Tap Left / Right (or [←] / [→]): Nudge axe in mid-air', mx + 16, curY);
+    ctx.fillText('• Keyboard: [A]/[D] Steer, [W]/[Space] Jump, [S] Slam', mx + 16, curY);
+    curY += 30;
     curY += 16;
     ctx.fillText('• [Space]: Spin/Drop | [↑]/[↓]: Change Bet | [B]: Bonus Buy', mx + 16, curY);
     curY += 16;

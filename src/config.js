@@ -37,8 +37,8 @@ export const CONFIG = {
 
   // Physics Tunings (Satisfying, high-energy, unpredictable falling rigid body)
   PHYSICS: {
-    GRAVITY: 1050,          // Pixels / s^2
-    MAX_FALL_SPEED: 800,    // Terminal fall velocity
+    GRAVITY: 1160,          // Faster downward pull for increased challenge
+    MAX_FALL_SPEED: 820,    // Terminal fall velocity
     AIR_DRAG: 0.995,
     ROTATION_DRAG: 0.990,
     DEFAULT_BOUNCE: 0.65,
@@ -50,7 +50,10 @@ export const CONFIG = {
     ANTI_STUCK_TIME: 0.35,  // Fast anti-stuck response
     ANTI_STUCK_SPEED_THRESHOLD: 32,
     NUDGE_IMPULSE_X: 220,
-    NUDGE_IMPULSE_Y: -100
+    NUDGE_IMPULSE_Y: -100,
+    JUMP_IMPULSE_Y: -360,   // Active jump hop velocity
+    JUMP_IMPULSE_X: 240,    // Active directional steering velocity
+    JUMP_COOLDOWN: 0.20     // Cooldown between jumps prevents infinite hovering
   },
 
   // Camera Settings
@@ -65,9 +68,9 @@ export const CONFIG = {
     wooden: {
       id: 'wooden',
       name: 'Wooden Pickaxe',
-      maxDurability: 60,
+      maxDurability: 45,    // Challenging starter durability
       damage: 1.0,
-      wearMult: 1.5,        // Soft wood wears down faster
+      wearMult: 1.85,       // Fragile wood wears quickly against underground rock
       size: 50,
       fallSpeedMult: 0.95,
       bounceStrength: 0.52,
@@ -77,9 +80,9 @@ export const CONFIG = {
     stone: {
       id: 'stone',
       name: 'Stone Pickaxe',
-      maxDurability: 110,
+      maxDurability: 85,
       damage: 1.6,
-      wearMult: 1.0,        // Standard wear
+      wearMult: 1.25,
       size: 52,
       fallSpeedMult: 1.05,
       bounceStrength: 0.60,
@@ -89,9 +92,9 @@ export const CONFIG = {
     iron: {
       id: 'iron',
       name: 'Iron Pickaxe',
-      maxDurability: 200,
+      maxDurability: 160,
       damage: 2.6,
-      wearMult: 0.72,       // Reinforced metal resists wear
+      wearMult: 0.85,
       size: 55,
       fallSpeedMult: 1.22,
       bounceStrength: 0.70,
@@ -101,9 +104,9 @@ export const CONFIG = {
     diamond: {
       id: 'diamond',
       name: 'Diamond Pickaxe',
-      maxDurability: 350,
+      maxDurability: 260,
       damage: 4.2,
-      wearMult: 0.45,       // Ultra-durable diamond cuts effortlessly
+      wearMult: 0.55,
       size: 58,
       fallSpeedMult: 1.40,
       bounceStrength: 0.80,
@@ -112,13 +115,13 @@ export const CONFIG = {
     }
   },
 
-  // Block Types: hp, mult (payout relative to bet), wear (hardness wear on pickaxe)
+  // Block Types: hp, rupeeReward (clean 1-rupee scaling payouts), wear (hardness wear on pickaxe)
   BLOCKS: {
     stone: {
       name: 'Stone',
       hp: 2,
-      mult: 0.15,
-      wear: 0.85,           // Standard stone wear
+      rupeeReward: 1.0,     // Increases by 1 rupee
+      wear: 1.0,            // Standard stone wear
       spriteKey: 'stone',
       debrisColor: '#6c6f78',
       sound: 'hit_stone'
@@ -126,8 +129,8 @@ export const CONFIG = {
     volcanic_stone: {
       name: 'Volcanic Rock',
       hp: 2,
-      mult: 0.25,
-      wear: 1.0,            // Rough volcanic stone
+      rupeeReward: 1.0,     // Increases by 1 rupee
+      wear: 1.4,            // Rough volcanic stone deals higher wear
       spriteKey: 'volcanic_stone',
       debrisColor: '#8a2828',
       sound: 'hit_stone'
@@ -135,8 +138,8 @@ export const CONFIG = {
     dirt: {
       name: 'Dirt',
       hp: 1,
-      mult: 0.08,
-      wear: 0.35,           // Soft dirt barely wears pickaxe
+      rupeeReward: 1.0,     // Increases by 1 rupee
+      wear: 0.4,            // Soft dirt
       spriteKey: 'dirt',
       debrisColor: '#845334',
       sound: 'hit_stone'
@@ -144,8 +147,8 @@ export const CONFIG = {
     hard_stone: {
       name: 'Hard Stone',
       hp: 3,
-      mult: 0.60,
-      wear: 2.2,            // High wear! Dangerous for weak pickaxes
+      rupeeReward: 2.0,     // 2 rupees
+      wear: 3.0,            // Heavy wear! Punishes mindless crashing
       spriteKey: 'hard_stone',
       debrisColor: '#3a3a44',
       sound: 'hit_stone'
@@ -153,8 +156,8 @@ export const CONFIG = {
     copper_ore: {
       name: 'Copper Ore',
       hp: 2,
-      mult: 1.20,
-      wear: 1.1,
+      rupeeReward: 3.0,     // 3 rupees
+      wear: 1.3,
       spriteKey: 'copper_ore',
       debrisColor: '#d2733c',
       sound: 'hit_ore'
@@ -162,8 +165,8 @@ export const CONFIG = {
     gold_ore: {
       name: 'Gold Ore',
       hp: 2,
-      mult: 3.50,
-      wear: 1.3,
+      rupeeReward: 5.0,     // 5 rupees
+      wear: 1.5,
       spriteKey: 'gold_ore',
       debrisColor: '#ffd700',
       sound: 'hit_ore'
@@ -171,8 +174,8 @@ export const CONFIG = {
     diamond_ore: {
       name: 'Diamond Ore',
       hp: 3,
-      mult: 10.00,
-      wear: 2.0,            // Dense crystalline ore
+      rupeeReward: 8.0,     // 8 rupees
+      wear: 2.2,
       spriteKey: 'diamond_ore',
       debrisColor: '#00e5ff',
       sound: 'hit_ore'
@@ -180,8 +183,8 @@ export const CONFIG = {
     emerald_ore: {
       name: 'Emerald Ore',
       hp: 3,
-      mult: 25.00,
-      wear: 2.4,
+      rupeeReward: 12.0,    // 12 rupees
+      wear: 2.6,
       spriteKey: 'emerald_ore',
       debrisColor: '#00e65a',
       sound: 'hit_ore'
@@ -189,8 +192,8 @@ export const CONFIG = {
     tnt: {
       name: 'TNT',
       hp: 1,
-      mult: 2.50,
-      wear: 0.1,            // Detonates on impact, very low direct wear
+      rupeeReward: 3.0,
+      wear: 0.1,
       spriteKey: 'tnt',
       debrisColor: '#d42828',
       sound: 'explode',
@@ -200,7 +203,7 @@ export const CONFIG = {
     upgrade: {
       name: 'Upgrade Block',
       hp: 1,
-      mult: 5.00,
+      rupeeReward: 2.0,
       wear: 0.2,
       spriteKey: 'upgrade',
       debrisColor: '#00e5ff',
@@ -210,30 +213,30 @@ export const CONFIG = {
     repair: {
       name: 'Repair Block',
       hp: 1,
-      mult: 1.50,
+      rupeeReward: 1.0,
       wear: 0.1,
       spriteKey: 'repair',
       debrisColor: '#ff2d55',
       sound: 'repair',
       isRepair: true,
-      repairAmount: 50
+      repairAmount: 35      // Precious repair health
     },
     bounce: {
       name: 'Bounce Block',
       hp: 999999,
-      mult: 0.10,
-      wear: 0.0,            // Elastic rubber/slime: ZERO wear!
+      rupeeReward: 0,
+      wear: 0.0,
       spriteKey: 'bounce',
       debrisColor: '#76ff03',
       sound: 'bounce',
       isBounce: true,
-      bounceBoost: 1.22
+      bounceBoost: 1.20
     },
     unbreakable: {
       name: 'Bedrock Border',
       hp: 999999,
-      mult: 0,
-      wear: 0.15,           // Polished border wall: minimal wear
+      rupeeReward: 0,
+      wear: 0.2,
       spriteKey: 'border_pillar',
       debrisColor: '#303038',
       sound: 'hit_stone',
@@ -241,16 +244,16 @@ export const CONFIG = {
     }
   },
 
-  // Level Generator Probabilities
+  // Level Generator Probabilities (Increased challenge with more hard obstacles)
   GENERATION: {
     EMPTY_RATIO: 0.20,
-    NORMAL_RATIO: 0.47,
-    VALUABLE_ORE_RATIO: 0.15,
-    REINFORCED_RATIO: 0.09,
-    BOUNCE_RATIO: 0.02,     // Significantly reduced green bounce blocks (rare & tactical)
-    UPGRADE_RATIO: 0.03,
+    NORMAL_RATIO: 0.44,
+    VALUABLE_ORE_RATIO: 0.14,
+    REINFORCED_RATIO: 0.16, // More hard stone barriers
+    BOUNCE_RATIO: 0.015,    // Reduced bounce pads
+    UPGRADE_RATIO: 0.02,
     TNT_RATIO: 0.02,
-    REPAIR_RATIO: 0.02
+    REPAIR_RATIO: 0.015
   },
 
   // 4-Chance Selector Wheel
