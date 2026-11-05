@@ -17,6 +17,7 @@ export class HUD {
     this.gameSpeed = 1.0;
     this.autoDrop = false;
     this.showInfo = false;
+    this.showBetModal = false;
 
     // Interactive Button Hitboxes
     this.buttons = {
@@ -67,6 +68,91 @@ export class HUD {
   }
 
   handleClick(canvasX, canvasY, onAction) {
+    // If Bet Selection Modal is open, handle bet selection clicks
+    if (this.showBetModal) {
+      const mx = 32;
+      const my = 290;
+      const mw = CONFIG.CANVAS_WIDTH - 64;
+      const mh = 430;
+
+      // Close [X] Button on header
+      const ic = { x: mx + mw - 24, y: my + 26, r: 18 };
+      if (Math.hypot(canvasX - ic.x, canvasY - ic.y) <= ic.r + 8) {
+        this.showBetModal = false;
+        if (onAction) onAction('bet_menu_closed');
+        return true;
+      }
+
+      // Confirm & Close Button
+      const doneBx = CONFIG.CANVAS_WIDTH / 2 - 110;
+      const doneBy = my + 322;
+      const doneBw = 220;
+      const doneBh = 48;
+      if (canvasX >= doneBx && canvasX <= doneBx + doneBw && canvasY >= doneBy && canvasY <= doneBy + doneBh) {
+        this.showBetModal = false;
+        if (onAction) onAction('bet_changed');
+        return true;
+      }
+
+      // MIN Button ($10)
+      const minBx = mx + 20;
+      const minBy = my + 252;
+      const minBw = 135;
+      const minBh = 42;
+      if (canvasX >= minBx && canvasX <= minBx + minBw && canvasY >= minBy && canvasY <= minBy + minBh) {
+        this.bet = 10;
+        this.showBetModal = false;
+        if (onAction) onAction('bet_changed');
+        return true;
+      }
+
+      // MAX Button ($1,000)
+      const maxBw = 135;
+      const maxBh = 42;
+      const maxBx = mx + mw - 20 - maxBw;
+      const maxBy = my + 252;
+      if (canvasX >= maxBx && canvasX <= maxBx + maxBw && canvasY >= maxBy && canvasY <= maxBy + maxBh) {
+        this.bet = 1000;
+        this.showBetModal = false;
+        if (onAction) onAction('bet_changed');
+        return true;
+      }
+
+      // Bet Options Grid (4 cols x 2 rows)
+      const cols = 4;
+      const chipW = 98;
+      const chipH = 62;
+      const gapX = 14;
+      const gapY = 16;
+      const startX = mx + 20;
+      const startY = my + 78;
+
+      const options = CONFIG.WALLET.BET_OPTIONS;
+      for (let i = 0; i < options.length; i++) {
+        const val = options[i];
+        const c = i % cols;
+        const r = Math.floor(i / cols);
+        const bx = startX + c * (chipW + gapX);
+        const by = startY + r * (chipH + gapY);
+
+        if (canvasX >= bx && canvasX <= bx + chipW && canvasY >= by && canvasY <= by + chipH) {
+          this.bet = val;
+          this.showBetModal = false;
+          if (onAction) onAction('bet_changed');
+          return true;
+        }
+      }
+
+      // Tap outside modal box to close
+      if (canvasX < mx || canvasX > mx + mw || canvasY < my || canvasY > my + mh) {
+        this.showBetModal = false;
+        if (onAction) onAction('bet_menu_closed');
+        return true;
+      }
+
+      return true; // Absorb any click inside modal
+    }
+
     // If Info Modal is open, handle close clicks
     if (this.showInfo) {
       const ic = this.buttons.infoClose;
@@ -134,10 +220,10 @@ export class HUD {
       return true;
     }
 
-    // Tapping directly on BET readout at bottom-right also cycles the bet!
-    if (canvasX >= 360 && canvasY >= 910) {
-      this.cycleBet();
-      if (onAction) onAction('bet_changed');
+    // Tapping directly on BET readout at bottom-right opens the interactive Bet Selection Modal!
+    if (canvasX >= 320 && canvasY >= 905) {
+      this.showBetModal = true;
+      if (onAction) onAction('bet_menu_opened');
       return true;
     }
 
@@ -199,36 +285,108 @@ export class HUD {
       ctx.restore();
     }
 
-    // 2. Top-Left: "FALLING PICKAXE" Logo Badge
+    // 2. Top-Left: "FALLING PICKAXE" Logo Badge (High-Visibility Solid Card)
+    const logoX = 12;
+    const logoY = 14;
+    const logoW = 156;
+    const logoH = 62;
+
+    // Solid dark slate backing card
+    ctx.fillStyle = 'rgba(16, 18, 28, 0.94)';
+    ctx.fillRect(logoX, logoY, logoW, logoH);
+    ctx.strokeStyle = '#4a567a';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(logoX, logoY, logoW, logoH);
+
+    // Cyan highlight on top border
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.7)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(logoX + 2, logoY + 2);
+    ctx.lineTo(logoX + logoW - 2, logoY + 2);
+    ctx.stroke();
+
     const logoImg = assets.get('logo');
     if (logoImg) {
-      ctx.drawImage(logoImg, 14, 16, 140, 60);
+      ctx.drawImage(logoImg, logoX + 3, logoY + 3, logoW - 6, logoH - 6);
+    } else {
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      ctx.font = 'bold 16px "Courier New", monospace';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillText('FALLING', logoX + 16, logoY + 22);
+      ctx.font = 'bold 18px "Courier New", monospace';
+      ctx.fillStyle = '#00e5ff';
+      ctx.fillText('PICKAXE ⛏', logoX + 16, logoY + 44);
     }
 
-    // 3. Top-Right: Active Pickaxe + Target Modifier Frame
-    const bFrameX = CONFIG.CANVAS_WIDTH - 130;
-    const bFrameY = 18;
-    ctx.fillStyle = 'rgba(25, 25, 35, 0.75)';
-    ctx.fillRect(bFrameX, bFrameY, 116, 56);
-    ctx.strokeStyle = 'rgba(120, 125, 145, 0.8)';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(bFrameX, bFrameY, 116, 56);
+    // 3. Top-Right: Active Pickaxe + Target Modifier Frame (Dual High-Contrast Compartments)
+    const bFrameX = CONFIG.CANVAS_WIDTH - 146; // 394
+    const bFrameY = 14;
+    const bFrameW = 134;
+    const bFrameH = 62;
+
+    // Outer backing card
+    ctx.fillStyle = 'rgba(16, 17, 26, 0.96)';
+    ctx.fillRect(bFrameX, bFrameY, bFrameW, bFrameH);
+    ctx.strokeStyle = '#8a95b8';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(bFrameX, bFrameY, bFrameW, bFrameH);
+
+    // Left Slot: Active Pickaxe (Warm slate high-contrast backing)
+    const slot1X = bFrameX + 4;
+    const slot1Y = bFrameY + 4;
+    const slotW = 58;
+    const slotH = 54;
+    ctx.fillStyle = '#42475e';
+    ctx.fillRect(slot1X, slot1Y, slotW, slotH);
+    ctx.strokeStyle = '#6c7596';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(slot1X, slot1Y, slotW, slotH);
 
     const pickImg = assets.get(pickaxe.tier.spriteKey);
     if (pickImg) {
-      ctx.drawImage(pickImg, bFrameX + 8, bFrameY + 8, 40, 40);
+      ctx.drawImage(pickImg, slot1X + 5, slot1Y + 3, 48, 48);
+    } else {
+      ctx.fillStyle = pickaxe.tier.accentColor || '#ffffff';
+      ctx.fillRect(slot1X + 14, slot1Y + 14, 30, 30);
     }
 
+    // Tier name badge at bottom of left slot
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.font = 'bold 9px "Courier New", monospace';
+    ctx.fillStyle = pickaxe.tier.accentColor || '#ffffff';
+    ctx.fillText(pickaxe.tier.id.toUpperCase(), slot1X + slotW / 2, slot1Y + slotH - 1);
+
+    // Center dividing line
     ctx.beginPath();
-    ctx.moveTo(bFrameX + 58, bFrameY + 4);
-    ctx.lineTo(bFrameX + 58, bFrameY + 52);
-    ctx.strokeStyle = '#454858';
+    ctx.moveTo(bFrameX + 66, bFrameY + 2);
+    ctx.lineTo(bFrameX + 66, bFrameY + bFrameH - 2);
+    ctx.strokeStyle = '#252938';
+    ctx.lineWidth = 2;
     ctx.stroke();
+
+    // Right Slot: Target Bonus Modifier / Glowing Pumpkin (Rich amber backing)
+    const slot2X = bFrameX + 70;
+    const slot2Y = bFrameY + 4;
+    ctx.fillStyle = '#4c1a05';
+    ctx.fillRect(slot2X, slot2Y, slotW, slotH);
+    ctx.strokeStyle = '#d4460c';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(slot2X, slot2Y, slotW, slotH);
 
     const targetIcon = assets.get('bonus_pumpkin');
     if (targetIcon) {
-      ctx.drawImage(targetIcon, bFrameX + 66, bFrameY + 8, 40, 40);
+      ctx.drawImage(targetIcon, slot2X + 5, slot2Y + 3, 48, 48);
     }
+
+    // Modifier label
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    ctx.font = 'bold 9px "Courier New", monospace';
+    ctx.fillStyle = '#ff9800';
+    ctx.fillText('TARGET', slot2X + slotW / 2, slot2Y + slotH - 1);
 
     // 4. Live Depth & Point Multiplier Ribbon
     if (gameState === 'FALLING') {
@@ -392,14 +550,25 @@ export class HUD {
     ctx.fillStyle = this.win > 0 ? '#76ff03' : '#ffffff';
     ctx.fillText(this.formatMoney(this.win), CONFIG.CANVAS_WIDTH / 2, 936);
 
-    // BET (Clickable area!)
-    ctx.textAlign = 'right';
-    ctx.font = 'bold 11px "Courier New", monospace';
+    // BET (Interactive Clickable Button Pill)
+    const betBx = CONFIG.CANVAS_WIDTH - 120;
+    const betBy = 918;
+    const betBw = 110;
+    const betBh = 40;
+    ctx.fillStyle = 'rgba(32, 28, 18, 0.95)';
+    ctx.fillRect(betBx, betBy, betBw, betBh);
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(betBx, betBy, betBw, betBh);
+
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    ctx.font = 'bold 10px "Courier New", monospace';
     ctx.fillStyle = '#ffd700';
-    ctx.fillText('BET ✎', CONFIG.CANVAS_WIDTH - 18, 922);
+    ctx.fillText('BET ✎ (CHANGE)', betBx + betBw / 2, betBy + 4);
     ctx.font = 'bold 15px "Courier New", monospace';
     ctx.fillStyle = '#ffffff';
-    ctx.fillText(this.formatMoney(this.bet), CONFIG.CANVAS_WIDTH - 18, 936);
+    ctx.fillText(`$${this.formatMoney(this.bet)}`, betBx + betBw / 2, betBy + 19);
 
     // 8. Victory Banner
     if (gameState === 'GAME_OVER' && this.win > 0 && !this.showInfo) {
@@ -427,7 +596,12 @@ export class HUD {
       ctx.fillText('TAP SPIN TO DROP AGAIN', CONFIG.CANVAS_WIDTH / 2, 545);
     }
 
-    // 9. Comprehensive Info & Rules Modal Overlay
+    // 9. Interactive Bet Selection Modal Sheet
+    if (this.showBetModal) {
+      this.renderBetModal(ctx, assets);
+    }
+
+    // 10. Comprehensive Info & Rules Modal Overlay
     if (this.showInfo) {
       this.renderInfoModal(ctx, assets);
     }
@@ -589,5 +763,163 @@ export class HUD {
     ctx.font = 'bold 16px "Courier New", monospace';
     ctx.fillStyle = '#ffd700';
     ctx.fillText('GOT IT! [CLOSE]', md.x, md.y);
+  }
+
+  renderBetModal(ctx, assets) {
+    // Backdrop shadow
+    ctx.fillStyle = 'rgba(6, 6, 12, 0.82)';
+    ctx.fillRect(0, 0, CONFIG.CANVAS_WIDTH, CONFIG.CANVAS_HEIGHT);
+
+    // Modal Box
+    const mx = 32;
+    const my = 290;
+    const mw = CONFIG.CANVAS_WIDTH - 64; // 476
+    const mh = 430;
+
+    // Dark obsidian modal background with golden border
+    ctx.fillStyle = '#141724';
+    ctx.fillRect(mx, my, mw, mh);
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 3;
+    ctx.strokeRect(mx, my, mw, mh);
+
+    // Modal Header Bar
+    ctx.fillStyle = '#1e2336';
+    ctx.fillRect(mx + 3, my + 3, mw - 6, 54);
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.font = 'bold 18px "Courier New", monospace';
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText('★ SELECT BET AMOUNT (USD) ★', CONFIG.CANVAS_WIDTH / 2, my + 24);
+
+    ctx.font = '12px "Courier New", monospace';
+    ctx.fillStyle = '#a0a8be';
+    ctx.fillText('Choose your stake for the upcoming round:', CONFIG.CANVAS_WIDTH / 2, my + 44);
+
+    // Close [X] Button on header
+    const ic = { x: mx + mw - 24, y: my + 26, r: 16 };
+    ctx.beginPath();
+    ctx.arc(ic.x, ic.y, ic.r, 0, Math.PI * 2);
+    ctx.fillStyle = '#ff1744';
+    ctx.fill();
+    ctx.strokeStyle = '#ffffff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 15px sans-serif';
+    ctx.fillText('✕', ic.x, ic.y);
+
+    // Bet Options Grid: 4 columns x 2 rows
+    const cols = 4;
+    const chipW = 98;
+    const chipH = 62;
+    const gapX = 14;
+    const gapY = 16;
+    const startX = mx + 20;
+    const startY = my + 78;
+
+    const options = CONFIG.WALLET.BET_OPTIONS;
+    for (let i = 0; i < options.length; i++) {
+      const val = options[i];
+      const c = i % cols;
+      const r = Math.floor(i / cols);
+      const bx = startX + c * (chipW + gapX);
+      const by = startY + r * (chipH + gapY);
+
+      const isSelected = (val === this.bet);
+
+      // Chip Background
+      if (isSelected) {
+        // Glowing Gold Active Chip
+        ctx.fillStyle = '#ffd700';
+        ctx.fillRect(bx, by, chipW, chipH);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(bx, by, chipW, chipH);
+
+        // Chip Value Text
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 16px "Courier New", monospace';
+        ctx.fillStyle = '#0a0b12';
+        ctx.fillText(`$${val}`, bx + chipW / 2, by + 24);
+
+        ctx.font = 'bold 10px "Courier New", monospace';
+        ctx.fillStyle = '#0a0b12';
+        ctx.fillText('✓ ACTIVE', bx + chipW / 2, by + 46);
+      } else {
+        // Unselected Slate Chip
+        ctx.fillStyle = '#202538';
+        ctx.fillRect(bx, by, chipW, chipH);
+        ctx.strokeStyle = '#4a5478';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(bx, by, chipW, chipH);
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.font = 'bold 16px "Courier New", monospace';
+        ctx.fillStyle = '#ffffff';
+        ctx.fillText(`$${val}`, bx + chipW / 2, by + 26);
+
+        ctx.font = '10px "Courier New", monospace';
+        ctx.fillStyle = '#8a94b0';
+        ctx.fillText('SELECT', bx + chipW / 2, by + 46);
+      }
+    }
+
+    // Quick Select Buttons: MIN ($10) & MAX ($1000)
+    // MIN
+    const minBx = mx + 20;
+    const minBy = my + 252;
+    const minBw = 135;
+    const minBh = 42;
+    ctx.fillStyle = '#1e2436';
+    ctx.fillRect(minBx, minBy, minBw, minBh);
+    ctx.strokeStyle = '#00e5ff';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(minBx, minBy, minBw, minBh);
+    ctx.font = 'bold 13px "Courier New", monospace';
+    ctx.fillStyle = '#00e5ff';
+    ctx.fillText('MIN ($10)', minBx + minBw / 2, minBy + minBh / 2);
+
+    // Current Bet display in middle
+    ctx.font = 'bold 12px "Courier New", monospace';
+    ctx.fillStyle = '#a0a8be';
+    ctx.fillText(`ROUND BET:`, CONFIG.CANVAS_WIDTH / 2, minBy + 12);
+    ctx.font = 'bold 16px "Courier New", monospace';
+    ctx.fillStyle = '#76ff03';
+    ctx.fillText(`$${this.formatMoney(this.bet)}`, CONFIG.CANVAS_WIDTH / 2, minBy + 30);
+
+    // MAX
+    const maxBw = 135;
+    const maxBh = 42;
+    const maxBx = mx + mw - 20 - maxBw;
+    const maxBy = my + 252;
+    ctx.fillStyle = '#1e2436';
+    ctx.fillRect(maxBx, maxBy, maxBw, maxBh);
+    ctx.strokeStyle = '#ffd700';
+    ctx.lineWidth = 2;
+    ctx.strokeRect(maxBx, maxBy, maxBw, maxBh);
+    ctx.font = 'bold 13px "Courier New", monospace';
+    ctx.fillStyle = '#ffd700';
+    ctx.fillText('MAX ($1,000)', maxBx + maxBw / 2, maxBy + maxBh / 2);
+
+    // Confirm & Close Button
+    const doneBx = CONFIG.CANVAS_WIDTH / 2 - 110;
+    const doneBy = my + 322;
+    const doneBw = 220;
+    const doneBh = 48;
+    ctx.fillStyle = '#22283c';
+    ctx.fillRect(doneBx, doneBy, doneBw, doneBh);
+    ctx.strokeStyle = '#76ff03';
+    ctx.lineWidth = 2.5;
+    ctx.strokeRect(doneBx, doneBy, doneBw, doneBh);
+    ctx.font = 'bold 16px "Courier New", monospace';
+    ctx.fillStyle = '#76ff03';
+    ctx.fillText('CONFIRM STAKE ✓', CONFIG.CANVAS_WIDTH / 2, doneBy + doneBh / 2);
+
+    ctx.font = '11px "Courier New", monospace';
+    ctx.fillStyle = '#8a92aa';
+    ctx.fillText('Applies to upcoming round / spins', CONFIG.CANVAS_WIDTH / 2, my + 395);
   }
 }

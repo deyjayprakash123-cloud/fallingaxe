@@ -181,7 +181,7 @@ export class Game {
           this.startWheelSequence(false);
         } else if (action === 'bonus_buy') {
           this.startWheelSequence(true);
-        } else if (action === 'bet_changed') {
+        } else if (action === 'bet_changed' || action === 'bet_menu_opened') {
           this.audio.play('spin');
         }
       });
