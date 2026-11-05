@@ -9,7 +9,7 @@ import { HUD } from './hud.js';
 
 /**
  * Main Game Controller
- * Integrates 4-chance wheel, demo betting wallet, continuous boundary physics,
+ * Integrates 4-chance wheel, USD betting wallet, continuous boundary physics,
  * real-time win accumulation, and arcade audiovisuals.
  */
 export class Game {
@@ -111,7 +111,7 @@ export class Game {
       : this.hud.bet;
 
     if (this.hud.cash < cost) {
-      this.particles.spawnPopup('INSUFFICIENT DMO CASH!', CONFIG.CANVAS_WIDTH / 2, 800, '#ff1744', 22);
+      this.particles.spawnPopup('INSUFFICIENT USD CASH!', CONFIG.CANVAS_WIDTH / 2, 800, '#ff1744', 22);
       this.audio.play('hit_stone', 1.5);
       return;
     }
@@ -312,15 +312,15 @@ export class Game {
     const blockCenterX = block.col * CONFIG.SHAFT.BLOCK_SIZE + CONFIG.SHAFT.BLOCK_SIZE / 2;
     const blockCenterY = CONFIG.SHAFT.START_ROW_Y + block.row * CONFIG.SHAFT.BLOCK_SIZE + CONFIG.SHAFT.BLOCK_SIZE / 2;
 
-    // Controlled 1-rupee unit reward calculation
+    // Controlled 1-USD unit reward calculation
     const betFactor = Math.max(1, Math.round(this.hud.bet / 30));
-    const baseReward = blockDef.rupeeReward !== undefined ? blockDef.rupeeReward : 1.0;
+    const baseReward = blockDef.usdReward !== undefined ? blockDef.usdReward : 1.0;
     const payout = Math.round(baseReward * betFactor);
 
     if (payout > 0) {
       this.totalRunWin += payout;
       this.hud.targetWin = Math.floor(this.totalRunWin);
-      this.particles.spawnPopup(`+${payout} ₹`, blockCenterX, blockCenterY, blockDef.debrisColor, isExplosion ? 16 : 21);
+      this.particles.spawnPopup(`+$${payout}`, blockCenterX, blockCenterY, blockDef.debrisColor, isExplosion ? 16 : 21);
     }
 
     this.particles.spawnBlockDebris(blockCenterX, blockCenterY, blockDef.debrisColor, isExplosion ? 6 : 10);
@@ -422,12 +422,12 @@ export class Game {
         this.maxDepthReached = currentDepth;
         this.depth = currentDepth;
 
-        // Controlled 1-rupee descent progression:
-        // Accumulate descent distance; award exactly +1.00 rupee for every 3.5m descended
+        // Controlled 1-USD descent progression:
+        // Accumulate descent distance; award exactly +1.00 USD for every 3.5m descended
         this.descentMeterAcc = (this.descentMeterAcc || 0) + delta;
-        const METERS_PER_RUPEE = 3.5;
-        while (this.descentMeterAcc >= METERS_PER_RUPEE) {
-          this.descentMeterAcc -= METERS_PER_RUPEE;
+        const METERS_PER_USD = 3.5;
+        while (this.descentMeterAcc >= METERS_PER_USD) {
+          this.descentMeterAcc -= METERS_PER_USD;
           this.totalRunWin += 1.0;
           this.hud.targetWin = Math.floor(this.totalRunWin);
         }

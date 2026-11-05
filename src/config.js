@@ -1,6 +1,6 @@
 /**
  * Game Configuration
- * Centralized configurations for demo betting, wallet, 4-chance wheel, physics, and mine shaft.
+ * Centralized configurations for USD betting, wallet, 4-chance wheel, physics, and mine shaft.
  */
 export const CONFIG = {
   // Virtual Canvas Resolution (9:16 mobile aspect ratio)
@@ -8,10 +8,10 @@ export const CONFIG = {
   CANVAS_HEIGHT: 960,
   TARGET_FPS: 60,
 
-  // Demo Betting & Wallet System
+  // USD Betting & Wallet System
   WALLET: {
     INITIAL_CASH: 50000.00,
-    CURRENCY_LABEL: 'DMO',
+    CURRENCY_LABEL: 'USD',
     BET_OPTIONS: [10, 20, 30, 50, 100, 250, 500, 1000],
     DEFAULT_BET: 30,
     BONUS_BUY_COST_MULTIPLIER: 5.0
@@ -115,12 +115,12 @@ export const CONFIG = {
     }
   },
 
-  // Block Types: hp, rupeeReward (clean 1-rupee scaling payouts), wear (hardness wear on pickaxe)
+  // Block Types: hp, usdReward (clean 1-USD scaling payouts), wear (hardness wear on pickaxe)
   BLOCKS: {
     stone: {
       name: 'Stone',
       hp: 2,
-      rupeeReward: 1.0,     // Increases by 1 rupee
+      usdReward: 1.0,       // Increases by 1 USD
       wear: 1.0,            // Standard stone wear
       spriteKey: 'stone',
       debrisColor: '#6c6f78',
@@ -129,7 +129,7 @@ export const CONFIG = {
     volcanic_stone: {
       name: 'Volcanic Rock',
       hp: 2,
-      rupeeReward: 1.0,     // Increases by 1 rupee
+      usdReward: 1.0,       // Increases by 1 USD
       wear: 1.4,            // Rough volcanic stone deals higher wear
       spriteKey: 'volcanic_stone',
       debrisColor: '#8a2828',
@@ -138,7 +138,7 @@ export const CONFIG = {
     dirt: {
       name: 'Dirt',
       hp: 1,
-      rupeeReward: 1.0,     // Increases by 1 rupee
+      usdReward: 1.0,       // Increases by 1 USD
       wear: 0.4,            // Soft dirt
       spriteKey: 'dirt',
       debrisColor: '#845334',
@@ -147,7 +147,7 @@ export const CONFIG = {
     hard_stone: {
       name: 'Hard Stone',
       hp: 3,
-      rupeeReward: 2.0,     // 2 rupees
+      usdReward: 2.0,       // 2 USD
       wear: 3.0,            // Heavy wear! Punishes mindless crashing
       spriteKey: 'hard_stone',
       debrisColor: '#3a3a44',
@@ -156,7 +156,7 @@ export const CONFIG = {
     copper_ore: {
       name: 'Copper Ore',
       hp: 2,
-      rupeeReward: 3.0,     // 3 rupees
+      usdReward: 3.0,       // 3 USD
       wear: 1.3,
       spriteKey: 'copper_ore',
       debrisColor: '#d2733c',
@@ -165,7 +165,7 @@ export const CONFIG = {
     gold_ore: {
       name: 'Gold Ore',
       hp: 2,
-      rupeeReward: 5.0,     // 5 rupees
+      usdReward: 5.0,       // 5 USD
       wear: 1.5,
       spriteKey: 'gold_ore',
       debrisColor: '#ffd700',
@@ -174,7 +174,7 @@ export const CONFIG = {
     diamond_ore: {
       name: 'Diamond Ore',
       hp: 3,
-      rupeeReward: 8.0,     // 8 rupees
+      usdReward: 8.0,       // 8 USD
       wear: 2.2,
       spriteKey: 'diamond_ore',
       debrisColor: '#00e5ff',
@@ -183,7 +183,7 @@ export const CONFIG = {
     emerald_ore: {
       name: 'Emerald Ore',
       hp: 3,
-      rupeeReward: 12.0,    // 12 rupees
+      usdReward: 12.0,      // 12 USD
       wear: 2.6,
       spriteKey: 'emerald_ore',
       debrisColor: '#00e65a',
@@ -192,7 +192,7 @@ export const CONFIG = {
     tnt: {
       name: 'TNT',
       hp: 1,
-      rupeeReward: 3.0,
+      usdReward: 3.0,
       wear: 0.1,
       spriteKey: 'tnt',
       debrisColor: '#d42828',
@@ -203,7 +203,7 @@ export const CONFIG = {
     upgrade: {
       name: 'Upgrade Block',
       hp: 1,
-      rupeeReward: 2.0,
+      usdReward: 2.0,
       wear: 0.2,
       spriteKey: 'upgrade',
       debrisColor: '#00e5ff',
@@ -213,7 +213,7 @@ export const CONFIG = {
     repair: {
       name: 'Repair Block',
       hp: 1,
-      rupeeReward: 1.0,
+      usdReward: 1.0,
       wear: 0.1,
       spriteKey: 'repair',
       debrisColor: '#ff2d55',
@@ -224,7 +224,7 @@ export const CONFIG = {
     bounce: {
       name: 'Bounce Block',
       hp: 999999,
-      rupeeReward: 0,
+      usdReward: 0,
       wear: 0.0,
       spriteKey: 'bounce',
       debrisColor: '#76ff03',
@@ -235,7 +235,7 @@ export const CONFIG = {
     unbreakable: {
       name: 'Bedrock Border',
       hp: 999999,
-      rupeeReward: 0,
+      usdReward: 0,
       wear: 0.2,
       spriteKey: 'border_pillar',
       debrisColor: '#303038',

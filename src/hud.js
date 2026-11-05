@@ -2,8 +2,8 @@ import { CONFIG } from './config.js';
 
 /**
  * Head-Up Display (HUD)
- * Authentic demo-betting interface matching the reference game:
- * Cash (DMO) wallet, Bet controls (- / +), Live Win counter, Depth Multiplier,
+ * Authentic arcade betting interface matching the reference game:
+ * Cash (USD) wallet, Bet controls (- / +), Live Win counter, Depth Multiplier,
  * Bonus Buy button, Info & Rules modal guide, and top-left / top-right pixel branding.
  */
 export class HUD {
@@ -162,7 +162,7 @@ export class HUD {
   update(dt) {
     if (this.win < this.targetWin) {
       this.winTickTimer = (this.winTickTimer || 0) + dt;
-      // Controlled 1-rupee increment every tick so the player sees the score increase cleanly by 1 rupee
+      // Controlled 1-USD increment every tick so the player sees the score increase cleanly by 1 USD
       const interval = (this.targetWin - this.win > 25) ? 0.04 : 0.08;
       if (this.winTickTimer >= interval) {
         this.winTickTimer = 0;
@@ -373,12 +373,12 @@ export class HUD {
     ctx.fillStyle = '#0a0b10';
     ctx.fillRect(0, 915, CONFIG.CANVAS_WIDTH, 45);
 
-    // CASH (DMO)
+    // CASH (USD)
     ctx.textAlign = 'left';
     ctx.textBaseline = 'top';
     ctx.font = 'bold 11px "Courier New", monospace';
     ctx.fillStyle = '#8a90a0';
-    ctx.fillText('CASH (DMO)', 18, 922);
+    ctx.fillText('CASH (USD)', 18, 922);
     ctx.font = 'bold 15px "Courier New", monospace';
     ctx.fillStyle = '#ffffff';
     ctx.fillText(this.formatMoney(this.cash), 18, 936);
@@ -416,7 +416,7 @@ export class HUD {
 
       ctx.font = 'bold 22px "Courier New", monospace';
       ctx.fillStyle = '#76ff03';
-      ctx.fillText(`+${this.formatMoney(this.win)} DMO`, CONFIG.CANVAS_WIDTH / 2, 465);
+      ctx.fillText(`+${this.formatMoney(this.win)} USD`, CONFIG.CANVAS_WIDTH / 2, 465);
 
       ctx.font = '15px "Courier New", monospace';
       ctx.fillStyle = '#ffffff';
@@ -517,23 +517,23 @@ export class HUD {
     ctx.fillText('• Warning: Crashing into Hard Stone deals -3 HP wear!', mx + 16, curY);
     curY += 24;
 
-    // --- Section 3: Blocks & Rupee Rewards ---
+    // --- Section 3: Blocks & USD Rewards ---
     ctx.font = 'bold 14px "Courier New", monospace';
     ctx.fillStyle = '#00e5ff';
-    ctx.fillText('3. BLOCKS & RUPEE REWARDS', mx + 16, curY);
+    ctx.fillText('3. BLOCKS & USD REWARDS', mx + 16, curY);
     curY += 18;
     ctx.font = '11.5px "Courier New", monospace';
     ctx.fillStyle = '#d0d4e0';
-    ctx.fillText('• Dirt / Stone / Volcanic: +1 ₹ payout', mx + 16, curY);
+    ctx.fillText('• Dirt / Stone / Volcanic: +$1 USD payout', mx + 16, curY);
     curY += 16;
     ctx.fillStyle = '#ff8a80';
-    ctx.fillText('• Hard Stone: +2 ₹ | High wear (-3 HP!)', mx + 16, curY);
+    ctx.fillText('• Hard Stone: +$2 USD | High wear (-3 HP!)', mx + 16, curY);
     curY += 16;
     ctx.fillStyle = '#ffd700';
-    ctx.fillText('• Copper: +3 ₹ | Gold: +5 ₹ | Diamond: +8 ₹ | Emerald: +12 ₹', mx + 16, curY);
+    ctx.fillText('• Copper: +$3 | Gold: +$5 | Diamond: +$8 | Emerald: +$12 USD', mx + 16, curY);
     curY += 16;
     ctx.fillStyle = '#ff5252';
-    ctx.fillText('• TNT: +3 ₹ | 3x3 blast clears path and awards blocks!', mx + 16, curY);
+    ctx.fillText('• TNT: +$3 USD | 3x3 blast clears path and awards blocks!', mx + 16, curY);
     curY += 16;
     ctx.fillStyle = '#76ff03';
     ctx.fillText('• Upgrade: Tier Up! | Repair: +35 HP | Bounce: 0 wear pad', mx + 16, curY);
@@ -542,15 +542,15 @@ export class HUD {
     // --- Section 4: Depth & Descent Score ---
     ctx.font = 'bold 14px "Courier New", monospace';
     ctx.fillStyle = '#00e5ff';
-    ctx.fillText('4. STEADY 1-RUPEE DESCENT SCORING', mx + 16, curY);
+    ctx.fillText('4. STEADY $1 USD DESCENT SCORING', mx + 16, curY);
     curY += 18;
     ctx.font = '11.5px "Courier New", monospace';
     ctx.fillStyle = '#d0d4e0';
-    ctx.fillText('• Score increases steadily by 1 ₹ every 3.5m descended!', mx + 16, curY);
+    ctx.fillText('• Score increases steadily by $1 USD every 3.5m descended!', mx + 16, curY);
     curY += 16;
     ctx.fillText('• Bouncing up or staying at same height gives NO score!', mx + 16, curY);
     curY += 16;
-    ctx.fillText('• You must push down into new depths to earn rupees!', mx + 16, curY);
+    ctx.fillText('• You must push down into new depths to earn USD!', mx + 16, curY);
     curY += 16;
     ctx.fillText('• Depth milestones at 50m, 100m, 150m celebrate records!', mx + 16, curY);
     curY += 24;
